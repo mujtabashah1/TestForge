@@ -115,7 +115,7 @@ Limitations:
 
 The first audit data reported three linked high findings: direct development dependency `prisma@6.19.3`, transitive `@prisma/config@6.19.3`, and transitive `deepmerge-ts@7.1.5`. GitHub advisory `GHSA-ggr8-5vv4-36mx` describes stack exhaustion when recursive object graphs are passed to deepmerge-ts below 8.0.0. The dependency is reached through the Prisma CLI configuration path, not the generated production Prisma client or request handling code. TestForge does not pass attacker-controlled recursive objects into Prisma configuration.
 
-The suggested npm remediation was Prisma 7.10.1, a major upgrade. It was not forced because Prisma 7 migration and generator/runtime changes require a dedicated compatibility change. A later `npm audit --json` and `npm audit --omit=dev --json` both returned zero findings while the installed vulnerable-version dependency path still exists. This discrepancy is documented; zero current npm findings is not represented as proof that the upstream advisory ceased to apply.
+The suggested npm remediation is Prisma 7.10.1, a major upgrade. It was not forced because Prisma 7 migration and generator/runtime changes require a dedicated compatibility change. Intermediate `npm audit --json` and `npm audit --omit=dev --json` calls transiently returned zero findings while the vulnerable-version path remained installed. The final audit refresh again returned 3 high, 0 critical. The final non-zero result is the release-state finding; the transient zero responses are retained as evidence of audit-service inconsistency, not remediation.
 
 ## Docker and CI blockers
 
@@ -141,14 +141,14 @@ The first successful remote runs emitted Node 20 action-runtime deprecation warn
 
 ## Previously reported versus independently observed
 
-| Baseline claim                                                    | M10 finding                                                                             |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Three static/type gates passed                                    | Independently passed                                                                    |
-| Backend/frontend production builds passed                         | Independently passed at baseline; patched backend build also passed                     |
-| Migrations and seeds passed                                       | Independently passed for development and test databases                                 |
-| 32/32 in 1.1 minutes                                              | Independently reproduced on a clean baseline rerun                                      |
-| Chromium, Firefox, WebKit, mobile Chromium                        | Independently observed                                                                  |
-| Lifecycle/concurrency/cancellation/payment/database checks passed | Independently observed; M10 added two targeted hardening checks                         |
-| Docker unavailable                                                | Confirmed; Compose runtime remains blocked                                              |
-| GitHub Actions not remotely executed                              | Two replacement workflows passed remotely on `092b2aa`                                  |
-| Three high Prisma-chain findings                                  | Observed initially; later npm audit returned zero despite the installed dependency path |
+| Baseline claim                                                    | M10 finding                                                                  |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Three static/type gates passed                                    | Independently passed                                                         |
+| Backend/frontend production builds passed                         | Independently passed at baseline; patched backend build also passed          |
+| Migrations and seeds passed                                       | Independently passed for development and test databases                      |
+| 32/32 in 1.1 minutes                                              | Independently reproduced on a clean baseline rerun                           |
+| Chromium, Firefox, WebKit, mobile Chromium                        | Independently observed                                                       |
+| Lifecycle/concurrency/cancellation/payment/database checks passed | Independently observed; M10 added two targeted hardening checks              |
+| Docker unavailable                                                | Confirmed; Compose runtime remains blocked                                   |
+| GitHub Actions not remotely executed                              | Two replacement workflows passed remotely on `092b2aa`                       |
+| Three high Prisma-chain findings                                  | Final audit confirms 3 high, 0 critical; Prisma 7.10.1 is a semver-major fix |

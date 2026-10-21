@@ -50,7 +50,7 @@ M10 independent verification is active on `main` in `D:\TestForge`. The original
 
 ## Security/dependencies
 
-An initial audit reported three linked high findings in Prisma CLI -> `@prisma/config` -> `deepmerge-ts@7.1.5`. The advisory applies to recursive object graphs passed into deepmerge APIs; the affected path is development/build tooling, not TestForge request processing. A forced Prisma 7 upgrade was not performed. Later npm audit commands returned zero findings even though the dependency path remains installed; the discrepancy is preserved in `docs/M10-independent-audit.md`.
+The final audit reports three linked high findings in Prisma CLI -> `@prisma/config` -> `deepmerge-ts@7.1.5`, with 0 critical. The advisory applies to recursive object graphs passed into deepmerge APIs; the affected path is development/build tooling, not TestForge request processing. The available automated fix is Prisma 7.10.1 and is semver-major, so a forced upgrade was not performed. Intermediate zero-finding responses and the final non-zero release state are preserved in `docs/M10-independent-audit.md`.
 
 High-confidence secret signatures were not found in tracked files or reachable history. Playwright traces may contain bearer headers and therefore remain ignored and access-controlled as CI artifacts.
 

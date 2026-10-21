@@ -137,6 +137,6 @@ Playwright retains screenshots, video, and traces on failure. High-value tests a
 - Payments are local and deterministic (tok_success / tok_fail); no real card data is accepted.
 - Token logout clears browser state; stateless JWTs are not server-revoked before expiry.
 - Docker and browser execution results are not claimed until recorded in the implementation status.
-- An initial npm audit reported a high-severity recursive-merge advisory in the Prisma CLI configuration dependency. Later audit requests returned zero findings even though the dependency path remains installed; the discrepancy and Prisma major-upgrade decision are documented in the M10 audit.
+- The final npm audit reports three linked high findings in the Prisma CLI configuration dependency. The available automated fix is a Prisma 7.10.1 major upgrade; applicability and the migration decision are documented in the M10 audit.
 - Playwright traces may capture bearer headers. Reports are ignored locally and CI artifacts should retain repository-scoped access with limited retention.
 - Tax providers, carriers, email delivery, and refresh-token rotation are outside portfolio scope.
