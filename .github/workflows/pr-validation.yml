@@ -1,14 +1,18 @@
 name: Pull request validation
 on:
   pull_request:
+    paths-ignore:
+      - '**/*.md'
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
 jobs:
   static:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run db:generate
@@ -32,8 +36,8 @@ jobs:
       API_URL: http://localhost:4000/api
       FRONTEND_URL: http://localhost:3000
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run db:generate && npm run db:migrate && npm run db:seed
@@ -44,7 +48,7 @@ jobs:
       - run: npm run test:api
       - run: npm run test:integration
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: api-integration-reports
           path: |
@@ -72,8 +76,8 @@ jobs:
       FRONTEND_URL: http://localhost:3000
       NEXT_PUBLIC_API_URL: http://localhost:4000/api
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npx playwright install --with-deps chromium
@@ -86,7 +90,7 @@ jobs:
       - run: npx wait-on http://localhost:4000/health http://localhost:3000
       - run: npm run test -w @testforge/automation -- --project=chromium --project=e2e-chromium
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: browser-smoke-reports
           path: |
