@@ -1,4 +1,5 @@
 import EmbeddedPostgres from 'embedded-postgres';
+import { existsSync } from 'node:fs';
 
 const database = new EmbeddedPostgres({
   databaseDir: '.local-postgres/data',
@@ -10,7 +11,9 @@ const database = new EmbeddedPostgres({
   onError: (error) => console.error(error),
 });
 
-await database.initialise();
+if (!existsSync('.local-postgres/data/PG_VERSION')) {
+  await database.initialise();
+}
 await database.start();
 for (const name of ['testforge_dev', 'testforge_test']) {
   try {

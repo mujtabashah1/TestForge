@@ -2,7 +2,7 @@
 
 TestForge is a production-style SDET portfolio: a persistent commerce application and an independently maintainable automation framework that validates its UI, REST API, PostgreSQL state, business transactions, and cross-layer workflows.
 
-Current verification status is recorded in docs/implementation-status.md. Docker configuration is implemented but was not executed on the authoring machine because Docker is unavailable.
+Current verification status is recorded in [docs/implementation-status.md](docs/implementation-status.md), with independent findings in [docs/M10-independent-audit.md](docs/M10-independent-audit.md). Docker configuration is implemented but has not been executed on this machine because Docker is unavailable.
 
 ## Skills demonstrated
 
@@ -127,8 +127,8 @@ Playwright retains screenshots, video, and traces on failure. High-value tests a
 
 ## CI/CD
 
-- pr-validation.yml performs type checking, linting, format checks, API tests, and database integration tests.
-- browser-regression.yml runs Chromium, Firefox, and WebKit on demand and weekly.
+- pr-validation.yml performs type checking, linting, format checks, API/database integration tests, Chromium UI smoke tests, and the critical lifecycle test.
+- browser-regression.yml runs Chromium, Firefox, WebKit, mobile Chromium, and the lifecycle test on pushes to main, on demand, and weekly.
 - Workflows provision PostgreSQL, apply migrations, seed data, wait for readiness, and upload evidence.
 - CI uses one conservative retry. Critical test failures fail the job.
 
@@ -137,5 +137,6 @@ Playwright retains screenshots, video, and traces on failure. High-value tests a
 - Payments are local and deterministic (tok_success / tok_fail); no real card data is accepted.
 - Token logout clears browser state; stateless JWTs are not server-revoked before expiry.
 - Docker and browser execution results are not claimed until recorded in the implementation status.
-- npm audit reports a high-severity recursive-merge advisory in the Prisma CLI configuration dependency. The automated fix requires a Prisma major-version migration; runtime application queries do not process attacker-supplied Prisma configuration.
+- An initial npm audit reported a high-severity recursive-merge advisory in the Prisma CLI configuration dependency. Later audit requests returned zero findings even though the dependency path remains installed; the discrepancy and Prisma major-upgrade decision are documented in the M10 audit.
+- Playwright traces may capture bearer headers. Reports are ignored locally and CI artifacts should retain repository-scoped access with limited retention.
 - Tax providers, carriers, email delivery, and refresh-token rotation are outside portfolio scope.

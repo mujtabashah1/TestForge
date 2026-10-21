@@ -26,7 +26,12 @@ export default defineConfig({
     { name: 'integration', testMatch: /tests\/integration\/.*\.spec\.ts/, use: {} },
     {
       name: 'chromium',
-      testMatch: /tests\/(ui|e2e)\/.*\.spec\.ts/,
+      testMatch: /tests\/ui\/.*\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'e2e-chromium',
+      testMatch: /tests\/e2e\/.*\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {

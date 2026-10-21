@@ -1,46 +1,59 @@
 # TestForge implementation status
 
-Last updated: 2026-10-22
+Last updated: 2026-10-22 02:58 PKT
+
+## Resume summary
+
+M10 independent verification is active on `main` in `D:\TestForge`. The original three commits are preserved. Local application/database verification is complete through the current hardening changes; GitHub authentication/publication and Docker runtime verification remain the principal external items.
 
 ## Environment
 
-- Directory: D:\TestForge (initially empty; inherited read-only ACL corrected)
+- Windows 10.0.19045, PowerShell
 - Node.js 24.11.1; npm 11.6.2; Git 2.54.0.windows.1
-- Docker / Docker Compose: unavailable locally
-- Workspace-local PostgreSQL 18.4 used for verification
-- Host: Windows PowerShell
+- Workspace-local PostgreSQL 18.4 used for development/test verification
+- Docker / Compose command unavailable
+- GitHub CLI 2.103.0 installed per-user; authenticated account verified as `mujtabashah1`
 
-## Milestones
+## M10 changes
 
-| Milestone                | State                     | Verification                                                                        |
-| ------------------------ | ------------------------- | ----------------------------------------------------------------------------------- |
-| 1. Foundation            | Complete                  | Dependency install, Prisma generation, TypeScript, ESLint, and Prettier passed      |
-| 2. AUT                   | Complete                  | Production builds passed; frontend/API ran against migrated PostgreSQL              |
-| 3. Automation foundation | Complete                  | Playwright, fixtures, POM, components, seven API clients, factories, schemas        |
-| 4. Full quality coverage | Complete                  | Final regression: 32 passed in 1.1 minutes                                          |
-| 5. Infrastructure        | Partially verified        | Local DB/migration/seed/readiness verified; Compose authored but Docker unavailable |
-| 6. Portfolio readiness   | Complete with limitations | README, genuine screenshots, HTML and Allure reports generated                      |
+- Made the embedded PostgreSQL launcher restart-safe.
+- Prevented cross-user disclosure through checkout idempotency-key collisions.
+- Made order status transitions and cancellation restocking atomic under serializable isolation.
+- Added API and integration regression tests for those two risks.
+- Separated Chromium UI and E2E Playwright projects.
+- Fixed lifecycle cart navigation using commit plus a web-first readiness assertion.
+- Added PR Chromium smoke/lifecycle coverage and main-branch cross-browser execution.
+- Changed CI artifact paths to explicit directories and retained service logs.
+- Added M10 audit, milestone matrix, and release checklist.
 
-## Verification record
+## Actual verification
 
-- npm run typecheck: passed across backend, frontend, and automation
-- npm run lint: passed across backend, frontend, and automation
-- npm run format:check: passed
-- npm run build: passed; API TypeScript and nine Next.js routes built
-- Database migrations: one migration applied successfully to development and test databases
-- Seed: deterministic seed completed successfully in both databases
-- npm test: 32 passed in 1.1 minutes with one local worker
-- Browsers: Chromium, Firefox, WebKit, and mobile Chromium passed
-- Showcase lifecycle, concurrency, cancellation/restock, payment retry, and database assertions passed
-- Allure report generated successfully at automation/allure-report
-- Playwright HTML report generated at automation/playwright-report
-- Genuine screenshots: docs/screenshots/home.png and docs/screenshots/products.png
-- npm audit: 3 high, 0 critical; linked to Prisma CLI / deepmerge-ts
+- `npm ci`: passed
+- `npm run db:generate`: passed
+- `npm run typecheck`: passed in all three workspaces after M10 code changes
+- `npm run lint`: passed in all three workspaces after M10 code changes
+- `npm run format:check`: passed before the documentation update
+- `npm run build`: baseline backend/frontend production builds passed
+- Patched backend build: passed
+- Development and test migrations/seeds: passed
+- Clean baseline `npm test`: 32 passed, 0 failed/skipped/retried in 1.1m
+- Focused M10 API/integration: 4 passed in 9.6s
+- First M10 full run: 33 passed, 1 lifecycle timeout in 2.5m; trace-driven cause corrected
+- Post-fix lifecycle repeat: 3 passed in 24.4s
+- One post-fix orchestration run reached 33 passing tests before the mobile project stalled at startup; the mobile test passed alone in 3.1s
+- Final clean post-change `npm test`: 34 passed, 0 failed/skipped/retried in 1.1m
+- Browser coverage observed: Chromium, Firefox, WebKit, and Pixel 7 mobile Chromium
 
-## Known limitations
+## Security/dependencies
 
-Docker is not installed, so Compose startup and container health checks are unverified. GitHub Actions were authored but cannot be executed locally. The npm audit fix is a Prisma major upgrade and was not forced.
+An initial audit reported three linked high findings in Prisma CLI -> `@prisma/config` -> `deepmerge-ts@7.1.5`. The advisory applies to recursive object graphs passed into deepmerge APIs; the affected path is development/build tooling, not TestForge request processing. A forced Prisma 7 upgrade was not performed. Later npm audit commands returned zero findings even though the dependency path remains installed; the discrepancy is preserved in `docs/M10-independent-audit.md`.
 
-## Recommended next work
+High-confidence secret signatures were not found in tracked files or reachable history. Playwright traces may contain bearer headers and therefore remain ignored and access-controlled as CI artifacts.
 
-Install Docker Desktop to validate docker compose up --build and run the workflows after GitHub publication. Plan and test a Prisma 7+ migration to clear the CLI advisory.
+## Current blockers and next actions
+
+1. Run final diff and secret checks.
+2. Commit the verified M10 changes with a descriptive message.
+3. Create the public `mujtabashah1/TestForge` repository, push without force, and inspect Actions.
+4. Record remote URLs, commit IDs, and CI results.
+5. Install Docker Desktop separately to complete Compose runtime verification; do not mark M7/M10 complete before that evidence exists.

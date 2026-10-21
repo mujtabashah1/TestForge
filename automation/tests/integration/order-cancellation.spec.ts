@@ -29,3 +29,32 @@ test('cancelling a paid order restores inventory and refunds payment', async ({
   ]);
   expect(row.rows[0]?.inventory).toBe(2);
 });
+
+test('simultaneous cancellation cannot restock an order twice', async ({
+  auth,
+  products,
+  cart,
+  orders,
+}) => {
+  const session = await (await auth.register(customerFactory())).json();
+  const admin = await (await auth.login(env.ADMIN_EMAIL, env.ADMIN_PASSWORD)).json();
+  products.setToken(admin.token);
+  const product = (await (await products.create(productFactory({ inventory: 2 }))).json()).product;
+  cart.setToken(session.token);
+  orders.setToken(session.token);
+  await cart.set(product.id, 1);
+  const order = (await (await orders.checkout(`cancel-race-${unique()}`)).json()).order;
+
+  orders.setToken(admin.token);
+  const results = await Promise.all([
+    orders.status(order.id, 'CANCELLED'),
+    orders.status(order.id, 'CANCELLED'),
+  ]);
+  expect(results.map((response) => response.status()).sort()).toEqual([200, 409]);
+
+  const row = await query<{ inventory: number; paymentStatus: string }>(
+    'SELECT pr.inventory,p.status AS "paymentStatus" FROM "Product" pr JOIN "OrderItem" oi ON oi."productId"=pr.id JOIN "Payment" p ON p."orderId"=oi."orderId" WHERE oi."orderId"=$1',
+    [order.id],
+  );
+  expect(row.rows[0]).toEqual({ inventory: 2, paymentStatus: 'REFUNDED' });
+});

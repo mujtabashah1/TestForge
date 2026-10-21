@@ -1,5 +1,7 @@
 name: Browser regression
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: '0 3 * * 1'
@@ -30,15 +32,20 @@ jobs:
       - run: npx playwright install --with-deps
       - run: npm run db:generate && npm run db:migrate && npm run db:seed
       - run: npm run build
-      - run: npm run start -w @testforge/backend &
-      - run: npm run start -w @testforge/frontend &
+      - name: Start backend
+        run: npm run start -w @testforge/backend > backend.log 2>&1 &
+      - name: Start frontend
+        run: npm run start -w @testforge/frontend > frontend.log 2>&1 &
       - run: npx wait-on http://localhost:4000/health http://localhost:3000
-      - run: npm run test -w @testforge/automation -- --project=chromium --project=firefox --project=webkit
+      - run: npm run test:regression -w @testforge/automation
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          {
-            name: browser-regression-reports,
-            path: 'automation/{playwright-report,allure-results,test-results}',
-            if-no-files-found: ignore,
-          }
+          name: browser-regression-reports
+          path: |
+            automation/playwright-report
+            automation/allure-results
+            automation/test-results
+            backend.log
+            frontend.log
+          if-no-files-found: ignore

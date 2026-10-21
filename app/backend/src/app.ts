@@ -219,7 +219,11 @@ app.post(
       where: { idempotencyKey: req.body.idempotencyKey },
       include: orderInclude,
     });
-    if (prior) return res.json({ order: prior, duplicate: true });
+    if (prior) {
+      if (prior.userId !== req.auth!.userId)
+        throw new HttpError(409, 'Idempotency key is already in use');
+      return res.json({ order: prior, duplicate: true });
+    }
     const order = await prisma.$transaction(
       async (tx) => {
         const cart = await tx.cartItem.findMany({
@@ -344,39 +348,47 @@ app.patch(
   requireAdmin,
   validate(statusSchema),
   asyncRoute(async (req, res) => {
-    const current = await prisma.order.findUnique({
-      where: { id: routeParam(req, 'id') },
-      include: orderInclude,
-    });
-    if (!current) throw new HttpError(404, 'Order not found');
-    if (!transitions[current.status].includes(req.body.status))
-      throw new HttpError(409, `Cannot transition from ${current.status} to ${req.body.status}`);
-    const order =
-      req.body.status === 'CANCELLED'
-        ? await prisma.$transaction(async (tx) => {
-            for (const item of current.items) {
-              await tx.product.update({
-                where: { id: item.productId },
-                data: { inventory: { increment: item.quantity }, version: { increment: 1 } },
-              });
-            }
-            if (current.payment?.status === 'SUCCEEDED') {
-              await tx.payment.update({
-                where: { orderId: current.id },
-                data: { status: 'REFUNDED' },
-              });
-            }
-            return tx.order.update({
-              where: { id: current.id },
-              data: { status: 'CANCELLED' },
-              include: orderInclude,
+    const id = routeParam(req, 'id');
+    const nextStatus = req.body.status as OrderStatus;
+    const order = await prisma.$transaction(
+      async (tx) => {
+        const current = await tx.order.findUnique({
+          where: { id },
+          include: orderInclude,
+        });
+        if (!current) throw new HttpError(404, 'Order not found');
+        if (!transitions[current.status].includes(nextStatus))
+          throw new HttpError(409, `Cannot transition from ${current.status} to ${nextStatus}`);
+
+        const claimed = await tx.order.updateMany({
+          where: { id: current.id, status: current.status },
+          data: { status: nextStatus },
+        });
+        if (claimed.count !== 1)
+          throw new HttpError(409, 'Order status changed concurrently; retry the request');
+
+        if (nextStatus === 'CANCELLED') {
+          for (const item of current.items) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { inventory: { increment: item.quantity }, version: { increment: 1 } },
             });
-          })
-        : await prisma.order.update({
-            where: { id: current.id },
-            data: { status: req.body.status },
-            include: orderInclude,
-          });
+          }
+          if (current.payment?.status === 'SUCCEEDED') {
+            await tx.payment.update({
+              where: { orderId: current.id },
+              data: { status: 'REFUNDED' },
+            });
+          }
+        }
+
+        return tx.order.findUniqueOrThrow({
+          where: { id: current.id },
+          include: orderInclude,
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
     res.json({ order });
   }),
 );
