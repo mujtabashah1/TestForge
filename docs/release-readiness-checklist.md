@@ -35,10 +35,10 @@
 - [ ] Docker images built locally - blocked because Docker is not installed
 - [ ] Compose services and health checks run - blocked because Docker is not installed
 - [x] GitHub account verified as `mujtabashah1`
-- [ ] Public repository created or safely reused
-- [ ] Local commits pushed without force
-- [ ] Remote `main` HEAD matches local HEAD
-- [ ] GitHub Actions results inspected
+- [x] Public repository created at `mujtabashah1/TestForge`
+- [x] Local commits pushed without force
+- [x] Remote `main` verified against local source commit
+- [x] Replacement GitHub Actions runs passed on `092b2aa`
 
 ## Documentation and evidence
 
@@ -46,6 +46,6 @@
 - [x] Architecture, strategy, coverage, setup, status, M10 audit, matrix, and checklist present
 - [x] Genuine application screenshots committed
 - [x] Local HTML/Allure/failure evidence locations documented
-- [ ] CI run links/results recorded after publication
+- [x] CI run links/results recorded after publication
 
-Release readiness remains partial while Docker runtime verification and remote CI/publication are unresolved.
+Release readiness remains partial only because Docker runtime verification is blocked on this host.

@@ -122,7 +122,22 @@ The suggested npm remediation was Prisma 7.10.1, a major upgrade. It was not for
 - `docker --version` and `docker compose version` fail because the Docker command is absent.
 - `docker-compose.yml` parses successfully and declares PostgreSQL, backend, frontend, health checks, dependency ordering, ports, and a named data volume.
 - Image builds, container health, restart behavior, and container-targeted tests remain not verified.
-- GitHub Actions YAML parses locally. Remote execution status must come from actual Actions runs after publication.
+- GitHub Actions YAML parses locally. Both workflows were executed remotely after publication.
+
+## GitHub publication and CI evidence
+
+- Public repository: https://github.com/mujtabashah1/TestForge
+- Authenticated owner verified: `mujtabashah1`
+- Original commit history preserved; no force push was used.
+- Initial M10 publication commit: `7de9f7d23d137703269b6607e8acfdeeae94542f`
+- CI runtime update commit: `092b2aa5a0d3aea78ca91db6dcc465e713fee7b1`
+- Pull request validation run 39683683521 passed. Static, API/integration, and Chromium smoke/lifecycle jobs all completed and uploaded artifacts.
+- Browser regression run 39683683553 passed. Build, readiness, cross-browser regression, cleanup, and artifact upload all completed.
+- Run URLs:
+  - https://github.com/mujtabashah1/TestForge/actions/runs/39683683521
+  - https://github.com/mujtabashah1/TestForge/actions/runs/39683683553
+
+The first successful remote runs emitted Node 20 action-runtime deprecation warnings. Official action release endpoints reported v7 as current for checkout, setup-node, and upload-artifact. M10 updated all three actions to v7 and verified the replacement runs above. The only remaining annotation is GitHub's informational migration notice for `ubuntu-latest` moving to Ubuntu 26.
 
 ## Previously reported versus independently observed
 
@@ -135,5 +150,5 @@ The suggested npm remediation was Prisma 7.10.1, a major upgrade. It was not for
 | Chromium, Firefox, WebKit, mobile Chromium                        | Independently observed                                                                  |
 | Lifecycle/concurrency/cancellation/payment/database checks passed | Independently observed; M10 added two targeted hardening checks                         |
 | Docker unavailable                                                | Confirmed; Compose runtime remains blocked                                              |
-| GitHub Actions not remotely executed                              | Pending publication/remote evidence                                                     |
+| GitHub Actions not remotely executed                              | Two replacement workflows passed remotely on `092b2aa`                                  |
 | Three high Prisma-chain findings                                  | Observed initially; later npm audit returned zero despite the installed dependency path |
