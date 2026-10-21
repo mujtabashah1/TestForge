@@ -1,0 +1,44 @@
+name: Browser regression
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_USER: testforge, POSTGRES_PASSWORD: testforge, POSTGRES_DB: testforge_test }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U testforge -d testforge_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://testforge:testforge@localhost:5432/testforge_test?schema=public
+      TEST_DATABASE_URL: postgresql://testforge:testforge@localhost:5432/testforge_test?schema=public
+      JWT_SECRET: ci-only-test-secret-with-sufficient-length
+      API_URL: http://localhost:4000/api
+      BASE_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npm run db:generate && npm run db:migrate && npm run db:seed
+      - run: npm run build
+      - run: npm run start -w @testforge/backend &
+      - run: npm run start -w @testforge/frontend &
+      - run: npx wait-on http://localhost:4000/health http://localhost:3000
+      - run: npm run test -w @testforge/automation -- --project=chromium --project=firefox --project=webkit
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          {
+            name: browser-regression-reports,
+            path: 'automation/{playwright-report,allure-results,test-results}',
+            if-no-files-found: ignore,
+          }
