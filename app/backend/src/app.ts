@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { Prisma, type OrderStatus } from '@prisma/client';
+import { Prisma, type OrderStatus } from './generated/prisma/client.js';
 import { config } from './config.js';
 import { prisma } from './db.js';
 import {

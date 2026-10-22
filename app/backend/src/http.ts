@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { Role } from '@prisma/client';
+import type { Role } from './generated/prisma/client.js';
 import jwt from 'jsonwebtoken';
 import { ZodError, type ZodType } from 'zod';
 import { config } from './config.js';
