@@ -2,7 +2,7 @@
 
 Assessment date: 2026-10-23 (Asia/Karachi)
 
-Status: **Partially Verified** pending Docker image execution and remote Linux CI on the migration branch.
+Status: **Partially Verified** pending Docker image execution. Local verification and remote Linux CI passed.
 
 ## Finding and exposure
 
@@ -66,13 +66,15 @@ All commands used the dedicated local `testforge_test` database for test executi
 | Full Playwright run                       | 34 passed, 0 failed, 0 skipped, 0 retried in 1.3 minutes            |
 | Browser coverage                          | Chromium, Firefox, WebKit, Pixel 7 mobile Chromium                  |
 | `npm audit --json` after update           | 0 total findings: 0 high, 0 critical                                |
+| GitHub Actions PR validation              | All three jobs passed on run `39843765749`                          |
 
 The integration evidence includes simultaneous purchase oversell protection, cancellation/restocking, and simultaneous cancellation protection. The lifecycle test exercises UI checkout, API response validation, PostgreSQL order/payment assertions, and inventory deduction.
+
+The first PR run (`39843348563`) exposed a Prisma 7 compatibility defect: the static job invoked `prisma generate` without `DATABASE_URL`. The Docker build layer had the same omission. Commit `2542663` supplied a non-production build-time URL at both call sites. Replacement run `39843765749` then passed static (25 seconds), API/integration (55 seconds), and browser smoke (1 minute 30 seconds) on Ubuntu/Node.js 22.
 
 ## Remaining verification
 
 - Docker Desktop cannot keep its WSL backend running on this host; therefore the Node 22 Alpine image build and Compose runtime remain unverified. See `docs/M11-docker-verification.md`.
-- Remote GitHub Actions must pass on this branch before integration into `main`. This is necessary evidence for Node 22 and Ubuntu runner compatibility.
 - The Prisma CLI currently advertises a Prisma 8 release candidate through its unqualified `latest` tag. TestForge pins 7.10.1 exactly to avoid accidental prerelease adoption.
 
 ## Rollback and data safety
