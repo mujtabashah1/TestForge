@@ -23,9 +23,11 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "9.0.10",
     "@types/node": "^24.10.0",
     "@types/pg": "^8.15.5",
     "allure-commandline": "^2.34.1",
+    "jsonwebtoken": "9.0.2",
     "typescript": "^5.9.3"
   }
 }
