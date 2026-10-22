@@ -3,9 +3,10 @@ import type { Role } from './generated/prisma/client.js';
 import jwt from 'jsonwebtoken';
 import { ZodError, type ZodType } from 'zod';
 import { config } from './config.js';
+import { prisma } from './db.js';
 
 export type AuthRequest = Request & {
-  auth?: { userId: string; role: Role };
+  auth?: { userId: string; role: Role; tokenVersion: number };
   validatedQuery?: unknown;
 };
 export class HttpError extends Error {
@@ -35,14 +36,43 @@ export const validate =
     }
   };
 
-export function authenticate(req: AuthRequest, _res: Response, next: NextFunction) {
+export async function authenticate(req: AuthRequest, _res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
   if (!token) return next(new HttpError(401, 'Authentication required'));
+
+  let claims: jwt.JwtPayload;
   try {
-    req.auth = jwt.verify(token, config.JWT_SECRET) as { userId: string; role: Role };
-    next();
+    const verified = jwt.verify(token, config.JWT_SECRET, {
+      algorithms: ['HS256'],
+      issuer: config.JWT_ISSUER,
+      audience: config.JWT_AUDIENCE,
+    });
+    if (typeof verified === 'string') throw new Error('Invalid token payload');
+    claims = verified;
   } catch {
-    next(new HttpError(401, 'Invalid or expired token'));
+    return next(new HttpError(401, 'Invalid or expired token'));
+  }
+
+  if (
+    typeof claims.userId !== 'string' ||
+    claims.sub !== claims.userId ||
+    !Number.isInteger(claims.tokenVersion)
+  ) {
+    return next(new HttpError(401, 'Invalid or expired token'));
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: claims.userId },
+      select: { id: true, role: true, active: true, tokenVersion: true },
+    });
+    if (!user || !user.active || user.tokenVersion !== claims.tokenVersion) {
+      return next(new HttpError(401, 'Invalid or expired token'));
+    }
+    req.auth = { userId: user.id, role: user.role, tokenVersion: user.tokenVersion };
+    return next();
+  } catch (error) {
+    return next(error);
   }
 }
 

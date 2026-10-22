@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { clearSession, currentUser } from '../lib/api';
+import { api, clearSession, currentUser } from '../lib/api';
 export function AuthActions() {
   const router = useRouter();
   const user = currentUser();
@@ -15,10 +15,14 @@ export function AuthActions() {
   return (
     <button
       className="secondary"
-      onClick={() => {
-        clearSession();
-        router.push('/');
-        router.refresh();
+      onClick={async () => {
+        try {
+          await api<void>('/auth/logout', { method: 'POST' });
+        } finally {
+          clearSession();
+          router.push('/');
+          router.refresh();
+        }
       }}
     >
       Sign out {user.name}

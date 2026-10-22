@@ -38,8 +38,14 @@ const routeParam = (req: express.Request, name: string) => {
   if (typeof value !== 'string') throw new HttpError(400, `Invalid ${name}`);
   return value;
 };
-const issueToken = (user: { id: string; role: string }) =>
-  jwt.sign({ userId: user.id, role: user.role }, config.JWT_SECRET, { expiresIn: '2h' });
+const issueToken = (user: { id: string; tokenVersion: number }) =>
+  jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion }, config.JWT_SECRET, {
+    algorithm: 'HS256',
+    expiresIn: '2h',
+    issuer: config.JWT_ISSUER,
+    audience: config.JWT_AUDIENCE,
+    subject: user.id,
+  });
 
 app.post(
   '/api/auth/register',
@@ -50,9 +56,9 @@ app.post(
     const { email, name, password } = req.body;
     const user = await prisma.user.create({
       data: { email, name, passwordHash: await bcrypt.hash(password, 12) },
-      select: publicUser,
     });
-    res.status(201).json({ user, token: issueToken(user) });
+    const safeUser = { id: user.id, email: user.email, name: user.name, role: user.role };
+    res.status(201).json({ user: safeUser, token: issueToken(user) });
   }),
 );
 
@@ -61,7 +67,7 @@ app.post(
   validate(credentialsSchema),
   asyncRoute(async (req, res) => {
     const user = await prisma.user.findUnique({ where: { email: req.body.email } });
-    if (!user || !(await bcrypt.compare(req.body.password, user.passwordHash)))
+    if (!user || !user.active || !(await bcrypt.compare(req.body.password, user.passwordHash)))
       throw new HttpError(401, 'Invalid email or password');
     const safeUser = { id: user.id, email: user.email, name: user.name, role: user.role };
     res.json({ user: safeUser, token: issueToken(user) });
@@ -80,7 +86,18 @@ app.get(
     res.json({ user });
   }),
 );
-app.post('/api/auth/logout', authenticate, (_req, res) => res.status(204).end());
+app.post(
+  '/api/auth/logout',
+  authenticate,
+  asyncRoute(async (req, res) => {
+    const result = await prisma.user.updateMany({
+      where: { id: req.auth!.userId, tokenVersion: req.auth!.tokenVersion, active: true },
+      data: { tokenVersion: { increment: 1 } },
+    });
+    if (result.count !== 1) throw new HttpError(401, 'Invalid or expired token');
+    res.status(204).end();
+  }),
+);
 
 app.get(
   '/api/products',
