@@ -16,3 +16,4 @@ blob-report/
 screenshots/runtime/
 postgres-data/
 .local-postgres/
+app/backend/src/generated/
